@@ -26,18 +26,20 @@ from legacy_model import *
 
 
 # Get raw data
-raw_data = get_raw_scdb_data("../data/input/SCDB_Legacy_01_justiceCentered_Citation.csv")
+raw_data = get_raw_scdb_data("../data/input/SCDB_Legacy_04_justiceCentered_Citation.csv")
 
 # Get feature data
-if os.path.exists("../data/output/feature_data.hdf.gz"):
-    print("Loading from HDF5 cache")
-    feature_df = pandas.read_hdf("../data/output/feature_data.hdf.gz", "root")
-else:
-    # Process
-    feature_df = preprocess_raw_data(raw_data, include_direction=True)
-    
-    # Write out feature datas
-    feature_df.to_hdf("../data/output/feature_data.hdf.gz", "root", complevel=6, complib="zlib")
+
+# Always get the original data
+# if os.path.exists("../data/output/feature_data.hdf.gz"):
+#     print("Loading from HDF5 cache")
+#     feature_df = pandas.read_hdf("../data/output/feature_data.hdf.gz", "root")
+# else:
+# Process
+feature_df = preprocess_raw_data(raw_data, include_direction=True)
+
+# Write out feature datas
+#feature_df.to_hdf("../data/output/feature_data.hdf.gz", "root", complevel=6, complib="zlib")
 
 
 # In[3]:
