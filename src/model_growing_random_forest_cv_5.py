@@ -1,11 +1,3 @@
-
-# coding: utf-8
-
-# In[1]:
-
-
-get_ipython().magic(u'matplotlib inline')
-
 # Imports
 import gc
 import matplotlib.pyplot as plt
@@ -20,10 +12,6 @@ seaborn.set_style("darkgrid")
 
 # Project imports
 from legacy_model import *
-
-
-# In[2]:
-
 
 # Get raw data
 raw_data = get_raw_scdb_data("../data/input/SCDB_Legacy_04_justiceCentered_Citation.csv")
@@ -41,16 +29,8 @@ feature_df = preprocess_raw_data(raw_data, include_direction=True)
 # Write out feature datas
 #feature_df.to_hdf("../data/output/feature_data.hdf.gz", "root", complevel=6, complib="zlib")
 
-
-# In[3]:
-
-
 # Downsample to float
 feature_df = feature_df.astype(numpy.float16)
-
-
-# In[4]:
-
 
 # Remove term
 nonterm_features = [f for f in feature_df.columns if not f.startswith("term_")]
@@ -58,18 +38,10 @@ original_feature_df = feature_df.copy()
 feature_df = original_feature_df.loc[:, nonterm_features].copy()
 gc.collect()
 
-
-# In[5]:
-
-
 # Output some diagnostics on features
 print(raw_data.shape)
 print(feature_df.shape)
 assert(raw_data.shape[0] == feature_df.shape[0])
-
-
-# In[ ]:
-
 
 # Reset output file timestamp per run
 file_timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
@@ -176,10 +148,6 @@ for term in term_range:
     del target_data_test
     gc.collect()
 
-
-# In[9]:
-
-
 # Evaluation range
 evaluation_index = raw_data.loc[:, "term"].isin(term_range)
 target_actual = (raw_data.loc[evaluation_index, "justice_outcome_disposition"]).astype(int)
@@ -199,12 +167,6 @@ raw_data.loc[:, "dummy_reverse_correct"] = numpy.nan
 raw_data.loc[evaluation_index, "rf_reverse_correct"] = (reverse_target_actual == reverse_target_predicted).astype(float)
 raw_data.loc[evaluation_index, "dummy_reverse_correct"] = (reverse_target_actual == reverse_target_dummy).astype(float)
 
-
-# ### Justice Accuracy - Other/Affirm/Reverse
-
-# In[10]:
-
-
 # Compare model
 print("RF model")
 print("="*32)
@@ -222,12 +184,6 @@ print(sklearn.metrics.confusion_matrix(target_actual, target_dummy))
 print(sklearn.metrics.accuracy_score(target_actual, target_dummy))
 print("="*32)
 print("")
-
-
-# ### Justice Accuracy - Reverse/Not-Reverse
-
-# In[11]:
-
 
 # Compare model
 print("RF model")
@@ -247,18 +203,11 @@ print(sklearn.metrics.accuracy_score(reverse_target_actual, reverse_target_dummy
 print("="*32)
 print("")
 
-
-# ### Justice Accuracy - Baseline and RF, Reverse/Not-Reverse
-
-# In[12]:
-
-
 # Setup time series
 rf_correct_ts = raw_data.loc[evaluation_index, :].groupby("term")["rf_correct"].mean()
 dummy_correct_ts = raw_data.loc[evaluation_index, :].groupby("term")["dummy_correct"].mean()
 rf_reverse_correct_ts = raw_data.loc[evaluation_index, :].groupby("term")["rf_reverse_correct"].mean()
 dummy_reverse_correct_ts = raw_data.loc[evaluation_index, :].groupby("term")["dummy_reverse_correct"].mean()
-
 
 # Plot all accuracies
 f = plt.figure(figsize=(16, 12))
@@ -268,12 +217,7 @@ plt.plot(dummy_reverse_correct_ts.index, dummy_reverse_correct_ts,
          marker='>', alpha=0.75)
 plt.legend(('Random forest', 'Dummy'))
 
-
 # ### Justice Accuracy - Spread between Baseline and RF
-
-# In[13]:
-
-
 # Setup time series
 rf_spread_ts = rf_reverse_correct_ts - dummy_reverse_correct_ts
 
@@ -285,12 +229,7 @@ plt.xlabel("Term")
 plt.ylabel("Spread (%)")
 plt.title("Spread over dummy model for justice accuracy")
 
-
 # ### Statistical Tests - Other/Affirm/Reverse
-
-# In[15]:
-
-
 # Output stats
 print("t-test:")
 print("Uncalibrated:")
@@ -310,12 +249,7 @@ print(statsmodels.stats.proportion.binom_test(raw_data.loc[evaluation_index, "rf
                                               raw_data.loc[evaluation_index, "dummy_correct"].mean(),
                                               alternative="larger"))
 
-
 # ### Statistical Tests - Reverse/Not-Reverse
-
-# In[17]:
-
-
 # Output stats
 print("t-test:")
 print("Uncalibrated:")
@@ -335,30 +269,16 @@ print(statsmodels.stats.proportion.binom_test(raw_data.loc[evaluation_index, "rf
                                               raw_data.loc[evaluation_index, "dummy_reverse_correct"].mean(),
                                               alternative="larger"))
 
-
 # ### Sample Feature Weights
-
-# In[18]:
-
-
 # Feature importance
 last_feature_importance_df = pandas.DataFrame(list(zip(feature_df.columns, m.best_estimator_.steps[-1][-1].feature_importances_)),
                                          columns=["feature", "importance"])
 last_feature_importance_df.sort_values(["importance"], ascending=False).head(10)
 
-
 # # Case Level Analysis
-
-# In[19]:
-
-
 # Get outcomes as reverse/not-reverse for real data
 raw_data.loc[:, "justice_outcome_reverse"] = (raw_data.loc[:, "justice_outcome_disposition"] > 0).astype(int)
 raw_data.loc[:, "case_outcome_reverse"] = (raw_data.loc[:, "case_outcome_disposition"] > 0).astype(int)
-
-
-# In[39]:
-
 
 # Store reverse predictions
 raw_data.loc[evaluation_index, "rf_predicted_reverse"] = (raw_data.loc[evaluation_index, "rf_predicted"] > 0).astype(int)
@@ -370,10 +290,6 @@ rf_predicted_case = (raw_data.loc[evaluation_index, :]    .groupby("docketId")["
 dummy_predicted_case = (raw_data.loc[evaluation_index, :]    .groupby("docketId")["dummy_predicted_reverse"].mean() >= 0.5).astype(int)
 
 actual_case = (raw_data.loc[evaluation_index, :]    .groupby("docketId")["case_outcome_reverse"].mean() > 0).astype(int)
-
-
-# In[44]:
-
 
 # Setup case dataframe
 case_data = pandas.DataFrame(rf_predicted_case).join(dummy_predicted_case).join(actual_case)
@@ -389,12 +305,7 @@ case_data.loc[:, "dummy_correct_case"] = (case_data.loc[:, "dummy_predicted_reve
 case_data.loc[:, "docketId"] = case_data.index
 raw_data = raw_data.join(case_data.loc[:, ["docketId", "rf_correct_case", "dummy_correct_case"]], on="docketId", rsuffix="_case")
 
-
 # ### Case Accuracy
-
-# In[46]:
-
-
 # Output comparison
 # Evaluation range
 evaluation_index = case_data.loc[:, "term"].isin(term_range)
@@ -420,12 +331,7 @@ print(sklearn.metrics.accuracy_score(target_actual, target_dummy))
 print("="*32)
 print("")
 
-
 # ### Case Accuracy (last century)
-
-# In[59]:
-
-
 # Output comparison
 # Evaluation range
 last_century = case_data["term"].drop_duplicates().sort_values().tail(100)
@@ -452,12 +358,7 @@ print(sklearn.metrics.accuracy_score(target_actual, target_dummy))
 print("="*32)
 print("")
 
-
 # ### Case Accuracy (20th century)
-
-# In[60]:
-
-
 # Output comparison
 # Evaluation range
 last_century = range(1900, 2000)
@@ -484,12 +385,7 @@ print(sklearn.metrics.accuracy_score(target_actual, target_dummy))
 print("="*32)
 print("")
 
-
 # ### Case Accuracy (19th century)
-
-# In[61]:
-
-
 # Output comparison
 # Evaluation range
 last_century = range(1816, 1900)
@@ -516,12 +412,7 @@ print(sklearn.metrics.accuracy_score(target_actual, target_dummy))
 print("="*32)
 print("")
 
-
 # ### Case Accuracy Time Series
-
-# In[47]:
-
-
 # Setup time series
 case_evaluation_index = ~case_data.loc[:, "rf_correct_case"].isnull()
 rf_correct_case_ts = case_data.loc[case_evaluation_index, :].groupby("term")["rf_correct_case"].mean()
@@ -535,10 +426,6 @@ plt.plot(dummy_correct_case_ts.index, dummy_correct_case_ts,
          marker='>', alpha=0.75)
 plt.legend(('Random forest', 'Dummy'))
 
-
-# In[48]:
-
-
 # Setup time series
 rf_spread_case_ts = rf_correct_case_ts - dummy_correct_case_ts
 
@@ -550,12 +437,7 @@ plt.xlabel("Term")
 plt.ylabel("Spread (%)")
 plt.title("Spread over dummy model for case accuracy")
 
-
 # ## Cumulative Term Win/Loss 
-
-# In[49]:
-
-
 # Setup time series
 rf_spread_case_dir_ts = pandas.expanding_sum(numpy.sign(rf_spread_case_ts))
 
@@ -564,12 +446,7 @@ f = plt.figure(figsize=(16, 12))
 plt.plot(rf_spread_case_dir_ts.index, rf_spread_case_dir_ts,
         alpha=0.75)
 
-
 # ### Statistical Tests - Case Accuracy (all time)
-
-# In[50]:
-
-
 # Output stats
 print("t-test:")
 print("Uncalibrated:")
@@ -589,12 +466,7 @@ print(statsmodels.stats.proportion.binom_test(case_data["rf_correct_case"].sum()
                                               case_data["dummy_correct_case"].mean(),
                                               alternative="larger"))
 
-
 # ### Statistical Tests - Case Accuracy (last century)
-
-# In[55]:
-
-
 # Output stats
 print("t-test:")
 print("Uncalibrated:")
@@ -615,12 +487,7 @@ print(statsmodels.stats.proportion.binom_test(case_data.loc[case_data["term"].is
                                               case_data.loc[case_data["term"].isin(last_century), "dummy_correct_case"].mean(),
                                               alternative="larger"))
 
-
 # ### Output Data
-
-# In[57]:
-
-
 # Output file data
 raw_data.to_csv("../data/output/raw_docket_justice_model_growing_random_forest_5.csv.gz", compression="gzip")
 case_data.to_csv("../data/output/raw_docket_case_model_growing_random_forest_5.csv.gz", compression="gzip")
