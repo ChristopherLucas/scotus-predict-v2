@@ -23,14 +23,12 @@ import sklearn.preprocessing
 # Project imports
 from legacy_model_data import party_map_data, court_circuit_map
 
-
 # Path constants
 DATA_PATH="../data/"
 SCDB_RELEASE="2015_01"
 
 # Model constants
 SCDB_OUTCOME_MAP=None
-
 
 def get_raw_scdb_data(scdb_path=None):
     """
@@ -55,7 +53,6 @@ def get_raw_scdb_data(scdb_path=None):
         .apply(lambda row: get_outcome(row["vote"], row["caseDisposition"]), axis=1)
 
     return raw_scdb_df
-
 
 def get_outcome_map():
     """
@@ -84,7 +81,6 @@ def get_outcome_map():
 
     return outcome_map
 
-
 def get_outcome(vote, disposition, outcome_map=SCDB_OUTCOME_MAP):
     """
     Return the outcome code based on outcome map.
@@ -98,7 +94,6 @@ def get_outcome(vote, disposition, outcome_map=SCDB_OUTCOME_MAP):
     
     return outcome_map.loc[int(vote), int(disposition)]
 
-
 def get_unique_values(values):
     """
     Get unique, sorted list of values with NA coding.
@@ -109,7 +104,6 @@ def get_unique_values(values):
 
     # Return sorted set
     return sorted(set(value_list))
-
 
 def binarize_values(values):
     """
@@ -122,7 +116,6 @@ def binarize_values(values):
     return value_codes, sklearn.preprocessing.label_binarize(values.fillna(-1).astype(int),
                                     value_codes)
 
-
 def get_date(value):
     """
     Get date value from SCDB string format.
@@ -131,7 +124,6 @@ def get_date(value):
         return datetime.datetime.strptime(value, "%m/%d/%Y").date()
     except:
         return None
-
 
 def get_date_month(value):
     """
@@ -142,13 +134,11 @@ def get_date_month(value):
     except:
         return -1
 
-
 def map_circuit(value):
     try:
         return court_circuit_map[value]
     except:
         return 0
-
     
 def map_party(value):
     try:
@@ -159,7 +149,6 @@ def map_party(value):
 def as_column_vector(values):
     # Return values as column vector
     return numpy.array(values, ndmin=2).T
-
 
 def preprocess_raw_data(raw_data, include_direction=False):
     """
@@ -331,8 +320,8 @@ def preprocess_raw_data(raw_data, include_direction=False):
               natural_court_raw,
               natural_court_encoded,
               argument_month_encoded,
-              decision_month_encoded,
-              as_column_vector(decision_delay),
+#              decision_month_encoded,
+#              as_column_vector(decision_delay),
               justice_encoded,
               petitioner_encoded,
               respondent_encoded,
@@ -376,8 +365,8 @@ def preprocess_raw_data(raw_data, include_direction=False):
     feature_labels.append("natural_court_raw")
     feature_labels.extend(["natural_court_{0}".format(x) for x in natural_court_codes])
     feature_labels.extend(["argument_month_{0}".format(x) for x in argument_month_codes])
-    feature_labels.extend(["decision_month_{0}".format(x) for x in decision_month_codes])
-    feature_labels.append("decision_delay")
+#    feature_labels.extend(["decision_month_{0}".format(x) for x in decision_month_codes])
+#    feature_labels.append("decision_delay")
     feature_labels.extend(["justice_{0}".format(x) for x in justice_codes])
     feature_labels.extend(["petitioner_{0}".format(x) for x in petitioner_codes])
     feature_labels.extend(["respondent_{0}".format(x) for x in respondent_codes])
@@ -417,7 +406,8 @@ def preprocess_raw_data(raw_data, include_direction=False):
 
     feature_df = pandas.DataFrame(feature_data,
                                  columns=feature_labels)
-    
+
+
     # Check direction
     if not include_direction:
         feature_df = feature_df.loc[:,

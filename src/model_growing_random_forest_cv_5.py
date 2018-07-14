@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import os
 import statsmodels.stats.proportion
 import sklearn.pipeline
+import pandas as pd
 
 # seaborn
 import seaborn
@@ -14,9 +15,12 @@ seaborn.set_style("darkgrid")
 from legacy_model import *
 
 # Get raw data
-raw_data = get_raw_scdb_data("../data/input/SCDB_Legacy_04_justiceCentered_Citation.csv")
-
+raw_data_legacy = get_raw_scdb_data("../data/input/SCDB_Legacy_04_justiceCentered_Citation.csv")
+raw_data_modern = get_raw_scdb_data("../data/input/SCDB_2017_01_justiceCentered_Docket.csv")
 # Get feature data
+
+raw_frames = [raw_data_legacy, raw_data_modern]
+raw_data = pd.concat(raw_frames)
 
 # Always get the original data
 # if os.path.exists("../data/output/feature_data.hdf.gz"):
@@ -25,6 +29,7 @@ raw_data = get_raw_scdb_data("../data/input/SCDB_Legacy_04_justiceCentered_Citat
 # else:
 # Process
 feature_df = preprocess_raw_data(raw_data, include_direction=True)
+print('done reading and processing data')
 
 # Write out feature datas
 #feature_df.to_hdf("../data/output/feature_data.hdf.gz", "root", complevel=6, complib="zlib")
@@ -89,7 +94,7 @@ for term in term_range:
     target_data_test = (raw_data.loc[test_index, "justice_outcome_disposition"]).astype(int)
     
     # Check if the justice set has changed
-    if set(raw_data.loc[raw_data.loc[:, "term"] == (term-1), "naturalCourt"].unique()) !=         set(raw_data.loc[raw_data.loc[:, "term"] == (term), "naturalCourt"].unique()):
+    if set(raw_data.loc[raw_data.loc[:, "term"] == (term-1), "naturalCourt"].unique()) != set(raw_data.loc[raw_data.loc[:, "term"] == (term), "naturalCourt"].unique()):
         # natural Court change; trigger forest fire
         print("Natural court change; rebuilding with {0} trees".format(initial_trees + (term_count * trees_per_term)))
         m = None
@@ -285,11 +290,11 @@ raw_data.loc[evaluation_index, "rf_predicted_reverse"] = (raw_data.loc[evaluatio
 raw_data.loc[evaluation_index, "dummy_predicted_reverse"] = (raw_data.loc[evaluation_index, "dummy_predicted"] > 0).astype(int)
 
 # Group by case
-rf_predicted_case = (raw_data.loc[evaluation_index, :]    .groupby("docketId")["rf_predicted_reverse"].mean() >= 0.5).astype(int)
+rf_predicted_case = (raw_data.loc[evaluation_index, :].groupby("docketId")["rf_predicted_reverse"].mean() >= 0.5).astype(int)
 
-dummy_predicted_case = (raw_data.loc[evaluation_index, :]    .groupby("docketId")["dummy_predicted_reverse"].mean() >= 0.5).astype(int)
+dummy_predicted_case = (raw_data.loc[evaluation_index, :].groupby("docketId")["dummy_predicted_reverse"].mean() >= 0.5).astype(int)
 
-actual_case = (raw_data.loc[evaluation_index, :]    .groupby("docketId")["case_outcome_reverse"].mean() > 0).astype(int)
+actual_case = (raw_data.loc[evaluation_index, :].groupby("docketId")["case_outcome_reverse"].mean() > 0).astype(int)
 
 # Setup case dataframe
 case_data = pandas.DataFrame(rf_predicted_case).join(dummy_predicted_case).join(actual_case)
@@ -489,7 +494,7 @@ print(statsmodels.stats.proportion.binom_test(case_data.loc[case_data["term"].is
 
 # ### Output Data
 # Output file data
-raw_data.to_csv("../data/output/raw_docket_justice_model_growing_random_forest_5.csv.gz", compression="gzip")
-case_data.to_csv("../data/output/raw_docket_case_model_growing_random_forest_5.csv.gz", compression="gzip")
-feature_importance_df.to_csv("../data/output/raw_docket_features_model_growing_random_forest_5.csv.gz", compression="gzip")
+raw_data.to_csv("../data/output/raw_docket_justice_model_growing_random_forest_5_CL.csv.gz", compression="gzip")
+case_data.to_csv("../data/output/raw_docket_case_model_growing_random_forest_5_CL.csv.gz", compression="gzip")
+feature_importance_df.to_csv("../data/output/raw_docket_features_model_growing_random_forest_5_CL.csv.gz", compression="gzip")
 
