@@ -1,15 +1,9 @@
 # Imports
 import gc
-import matplotlib.pyplot as plt
 import os
 import statsmodels.stats.proportion
 import sklearn.pipeline
 import pandas as pd
-
-# seaborn
-import seaborn
-seaborn.set()
-seaborn.set_style("darkgrid")
 
 # Project imports
 from legacy_model import *
@@ -214,25 +208,9 @@ dummy_correct_ts = raw_data.loc[evaluation_index, :].groupby("term")["dummy_corr
 rf_reverse_correct_ts = raw_data.loc[evaluation_index, :].groupby("term")["rf_reverse_correct"].mean()
 dummy_reverse_correct_ts = raw_data.loc[evaluation_index, :].groupby("term")["dummy_reverse_correct"].mean()
 
-# Plot all accuracies
-f = plt.figure(figsize=(16, 12))
-plt.plot(rf_reverse_correct_ts.index, rf_reverse_correct_ts,
-         marker='o', alpha=0.75)
-plt.plot(dummy_reverse_correct_ts.index, dummy_reverse_correct_ts,
-         marker='>', alpha=0.75)
-plt.legend(('Random forest', 'Dummy'))
-
 # ### Justice Accuracy - Spread between Baseline and RF
 # Setup time series
 rf_spread_ts = rf_reverse_correct_ts - dummy_reverse_correct_ts
-
-# Plot all accuracies
-f = plt.figure(figsize=(16, 12))
-plt.bar(rf_spread_ts.index, rf_spread_ts,
-        alpha=0.75)
-plt.xlabel("Term")
-plt.ylabel("Spread (%)")
-plt.title("Spread over dummy model for justice accuracy")
 
 # ### Statistical Tests - Other/Affirm/Reverse
 # Output stats
@@ -423,33 +401,12 @@ case_evaluation_index = ~case_data.loc[:, "rf_correct_case"].isnull()
 rf_correct_case_ts = case_data.loc[case_evaluation_index, :].groupby("term")["rf_correct_case"].mean()
 dummy_correct_case_ts = case_data.loc[case_evaluation_index, :].groupby("term")["dummy_correct_case"].mean()
 
-# Plot all accuracies
-f = plt.figure(figsize=(16, 12))
-plt.plot(rf_correct_case_ts.index, rf_correct_case_ts,
-         marker='o', alpha=0.75)
-plt.plot(dummy_correct_case_ts.index, dummy_correct_case_ts,
-         marker='>', alpha=0.75)
-plt.legend(('Random forest', 'Dummy'))
-
 # Setup time series
 rf_spread_case_ts = rf_correct_case_ts - dummy_correct_case_ts
-
-# Plot all accuracies
-f = plt.figure(figsize=(16, 12))
-plt.bar(rf_spread_case_ts.index, rf_spread_case_ts,
-        alpha=0.75)
-plt.xlabel("Term")
-plt.ylabel("Spread (%)")
-plt.title("Spread over dummy model for case accuracy")
 
 # ## Cumulative Term Win/Loss 
 # Setup time series
 rf_spread_case_dir_ts = pandas.expanding_sum(numpy.sign(rf_spread_case_ts))
-
-# Plot all accuracies
-f = plt.figure(figsize=(16, 12))
-plt.plot(rf_spread_case_dir_ts.index, rf_spread_case_dir_ts,
-        alpha=0.75)
 
 # ### Statistical Tests - Case Accuracy (all time)
 # Output stats
